@@ -3,7 +3,7 @@ require 'active_record/connection_adapters/abstract/schema_definitions'
 module ActiveRecord
   module ConnectionAdapters
     class ColumnDefinition
-      attr_accessor :unsigned
+      attr_accessor :auto_increment, :unsigned
     end
 
     class TableDefinition
@@ -15,6 +15,7 @@ module ActiveRecord
       def new_column_definition(name, type, options)
         column = new_column_definition_without_unsigned(name, type, options)
         column.unsigned = options[:unsigned]
+        column.auto_increment = options[:auto_increment]
         column
       end
     end

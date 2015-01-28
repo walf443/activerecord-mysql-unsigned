@@ -3,7 +3,7 @@ require 'active_record/connection_adapters/abstract/schema_definitions'
 module ActiveRecord
   module ConnectionAdapters
     class ColumnDefinition
-      attr_accessor :sql_type, :unsigned, :first, :after
+      attr_accessor :sql_type, :auto_increment, :unsigned, :first, :after
 
       def sql_type
         base.type_to_sql(type.to_sym, limit, precision, scale, unsigned) rescue type

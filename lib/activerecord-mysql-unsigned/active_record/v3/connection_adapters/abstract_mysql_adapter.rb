@@ -4,7 +4,7 @@ module ActiveRecord
   module ConnectionAdapters
     class AbstractMysqlAdapter < AbstractAdapter
 
-      class TableDefinition
+      class PseudoTableDefinition
         def initialize(base)
           @base = base
         end
@@ -23,6 +23,7 @@ module ActiveRecord
           column.null        = options[:null]
           column.first       = options[:first]
           column.after       = options[:after]
+          column.auto_increment = options[:auto_increment]
           column
         end
 
@@ -42,7 +43,7 @@ module ActiveRecord
       end
 
       def create_table_definition(name, temporary, options)
-        TableDefinition.new self
+        PseudoTableDefinition.new self
       end
 
     end
