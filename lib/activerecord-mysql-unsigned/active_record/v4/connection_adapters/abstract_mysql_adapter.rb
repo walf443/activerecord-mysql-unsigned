@@ -29,8 +29,8 @@ module ActiveRecord
         end
 
         def visit_ColumnDefinition(o)
-          sql_type = type_to_sql(o.type.to_sym, o.limit, o.precision, o.scale, o.unsigned)
-          column_sql = "#{quote_column_name(o.name)} #{sql_type}"
+          o.sql_type = type_to_sql(o.type.to_sym, o.limit, o.precision, o.scale, o.unsigned)
+          column_sql = "#{quote_column_name(o.name)} #{o.sql_type}"
           add_column_options!(column_sql, column_options(o)) unless o.type.to_sym == :primary_key
 
           column_sql
