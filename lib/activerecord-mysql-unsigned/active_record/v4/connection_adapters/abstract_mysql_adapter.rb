@@ -49,6 +49,7 @@ module ActiveRecord
           elsif options[:after]
             sql << " AFTER #{quote_column_name(options[:after])}"
           end
+          sql
         end
 
         def type_to_sql(type, limit, precision, scale, unsigned = false)
