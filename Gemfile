@@ -1,6 +1,9 @@
 source 'https://rubygems.org'
 
-gem "activerecord", "~> #{ENV['AR_VERSION']}" if ENV['AR_VERSION']
+gem 'arel', git: 'https://github.com/rails/arel.git'
+git 'https://github.com/rails/rails.git' do
+  gem 'activerecord'
+end
 
 # Specify your gem's dependencies in activerecord-mysql-unsigned.gemspec
 gemspec
