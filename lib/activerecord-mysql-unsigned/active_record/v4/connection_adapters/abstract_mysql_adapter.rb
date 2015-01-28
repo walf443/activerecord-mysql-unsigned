@@ -4,7 +4,7 @@ module ActiveRecord
   module ConnectionAdapters
     class AbstractMysqlAdapter < AbstractAdapter
  
-      class ChangeColumnDefinition < Struct.new(:column, :type, :options) #:nodoc:
+      class ChangeColumnDefinition < Struct.new(:column, :name) #:nodoc:
       end
 
       class SchemaCreation < AbstractAdapter::SchemaCreation
@@ -12,16 +12,7 @@ module ActiveRecord
           add_column_position!("ADD #{accept(o)}", column_options(o))
         end
 
-        def visit_ChangeColumnDefinition(o)
-          column = o.column
-          options = o.options
-          sql_type = type_to_sql(o.type, options[:limit], options[:precision], options[:scale], options[:unsigned])
-          change_column_sql = "CHANGE #{quote_column_name(column.name)} #{quote_column_name(options[:name])} #{sql_type}"
-          add_column_options!(change_column_sql, options.merge(column: column)) unless o.type.to_sym == :primary_key
-          add_column_position!(change_column_sql, options)
-
-          change_column_sql
-        end
+        private
 
         def visit_ColumnDefinition(o)
           o.sql_type = type_to_sql(o.type.to_sym, o.limit, o.precision, o.scale, o.unsigned)
@@ -29,6 +20,11 @@ module ActiveRecord
           add_column_options!(column_sql, column_options(o)) unless o.type.to_sym == :primary_key
 
           column_sql
+        end
+
+        def visit_ChangeColumnDefinition(o)
+          change_column_sql = "CHANGE #{quote_column_name(o.name)} #{accept(o.column)}"
+          add_column_position!(change_column_sql, column_options(o.column))
         end
 
         def column_options(o)
@@ -92,7 +88,7 @@ module ActiveRecord
       end
 
       def add_column_sql(table_name, column_name, type, options = {})
-        td = create_table_definition table_name, options[:temporary], options[:options]
+        td = create_table_definition(table_name, false, nil)
         cd = td.new_column_definition(column_name, type, options)
         schema_creation.visit_AddColumn cd
       end
@@ -108,8 +104,23 @@ module ActiveRecord
           options[:null] = column.null
         end
 
-        options[:name] = column.name
-        schema_creation.visit_ChangeColumnDefinition ChangeColumnDefinition.new column, type, options
+        td = create_table_definition(table_name, false, nil)
+        cd = td.new_column_definition(column.name, type, options)
+        schema_creation.accept(ChangeColumnDefinition.new(cd, column.name))
+      end
+
+      def rename_column_sql(table_name, column_name, new_column_name)
+        column  = column_for(table_name, column_name)
+        options = {
+          default: column.default,
+          null: column.null,
+          auto_increment: column.extra == "auto_increment"
+        }
+
+        current_type = select_one("SHOW COLUMNS FROM #{quote_table_name(table_name)} LIKE '#{column_name}'", 'SCHEMA')["Type"]
+        td = create_table_definition(table_name, false, nil)
+        cd = td.new_column_definition(new_column_name, current_type, options)
+        schema_creation.accept(ChangeColumnDefinition.new(cd, column.name))
       end
 
     end
