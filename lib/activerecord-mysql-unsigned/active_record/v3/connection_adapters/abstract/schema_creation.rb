@@ -4,6 +4,12 @@ module ActiveRecord
       class SchemaCreation # :nodoc:
         def initialize(conn)
           @conn = conn
+          @cache = {}
+        end
+
+        def accept(o)
+          m = @cache[o.class] ||= "visit_#{o.class.name.split('::').last}"
+          send m, o
         end
 
         private

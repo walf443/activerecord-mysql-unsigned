@@ -4,7 +4,7 @@ module ActiveRecord
   module ConnectionAdapters
     class AbstractMysqlAdapter < AbstractAdapter
 
-      class TableDefinition
+      class PseudoTableDefinition
         def initialize(base)
           @base = base
         end
@@ -23,6 +23,7 @@ module ActiveRecord
           column.null        = options[:null]
           column.first       = options[:first]
           column.after       = options[:after]
+          column.auto_increment = options[:auto_increment]
           column
         end
 
@@ -37,12 +38,27 @@ module ActiveRecord
         end
       end
 
+      class Column < ConnectionAdapters::Column # :nodoc:
+        attr_accessor :extra
+      end
+
+      def columns(table_name, name = nil) #:nodoc:
+        sql = "SHOW FULL FIELDS FROM #{quote_table_name(table_name)}"
+        execute_and_free(sql, 'SCHEMA') do |result|
+          each_hash(result).map do |field|
+            new_column(field[:Field], field[:Default], field[:Type], field[:Null] == "YES", field[:Collation]).tap do |column|
+              column.extra = field[:Extra]
+            end
+          end
+        end
+      end
+
       def schema_creation
         SchemaCreation.new self
       end
 
       def create_table_definition(name, temporary, options)
-        TableDefinition.new self
+        PseudoTableDefinition.new self
       end
 
     end

@@ -28,16 +28,21 @@ describe "INT/Decimal column" do
   end
 
   it "not allowed minus value of unsigned int" do
-    @user.unsigned_int = -2147483648
 
     if strict_mode?
       begin
+        @user.unsigned_int = -2147483648
         @user.save
         expect(true).to be_falsey # should not be reached here
       rescue => e
-        expect(e).to be_an_instance_of ActiveRecord::StatementInvalid
+        if ActiveRecord::VERSION::STRING < "4.2.0"
+          expect(e).to be_an_instance_of ActiveRecord::StatementInvalid
+        else
+          expect(e).to be_an_instance_of RangeError
+        end
       end
     else
+      @user.unsigned_int = -2147483648
       @user.save
       @user.reload
       expect(@user.unsigned_int).to be 0 # saved 0
