@@ -61,6 +61,7 @@ end
 class AddColumnToUsersTable < ActiveRecord::Migration
   def self.change
     add_column    :users, :added_unsigned_int, :integer, unsigned: true
+    rename_column :users, :added_unsigned_int, :renamed_unsigned_int
   end
 end
 
